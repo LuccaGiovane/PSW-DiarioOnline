@@ -1,17 +1,18 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from .models import Pessoa, Diario
 from datetime import datetime, timedelta
+
 from django.db.models import Count
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+
+from .models import Pessoa, Diario
+
 
 def home(request):
     textos = Diario.objects.all().order_by('-create_at')[:3]
-    pessoas = Pessoa.objects.all()
 
     pessoas_com_contagem = Pessoa.objects.annotate(qtd_diarios=Count('diario'))
     nomes = [pessoa.nome for pessoa in pessoas_com_contagem]
     qtds = [pessoa.qtd_diarios for pessoa in pessoas_com_contagem]
-
 
     return render(request, 'home.html', {'textos':textos, 'nomes':nomes, 'qtds':qtds})
 
@@ -29,8 +30,10 @@ def escrever(request):
         texto   = request.POST.get('texto')
 
         if len(titulo.strip()) == 0 or len(texto.strip()) == 0:
-            #TODO: adicionar mensagens de erro
-            return redirect('escrever')
+            return render(request, 'escrever.html', {
+                'pessoas': Pessoa.objects.all(),
+                'error_message': 'Título e texto não podem estar vazios!'
+            })
 
         diario = Diario(titulo=titulo, texto=texto)
         diario.save()
@@ -42,8 +45,10 @@ def escrever(request):
         diario.set_tags(tags)
         diario.save()
 
-        #TODO: adicionar msg de sucesso
-        return redirect('escrever')
+        return render(request, 'escrever.html', {
+            'pessoas': Pessoa.objects.all(),
+            'sucess_message': 'Registro diário salvo com sucesso!'
+        })
 
 
 def cadastrar_pessoa(request):
