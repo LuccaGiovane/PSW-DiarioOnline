@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from collections import Counter
 
 from .models import Pessoa, Diario
 
@@ -14,7 +15,21 @@ def home(request):
     nomes = [pessoa.nome for pessoa in pessoas_com_contagem]
     qtds = [pessoa.qtd_diarios for pessoa in pessoas_com_contagem]
 
-    return render(request, 'home.html', {'textos':textos, 'nomes':nomes, 'qtds':qtds})
+    todas_as_tags = []
+    for diario in Diario.objects.all():
+        if diario.tags:
+            todas_as_tags.extend(diario.tags.split(','))
+
+    contagem_tags = Counter(todas_as_tags)
+    tags = list(contagem_tags.keys())
+    qtd_tags = list(contagem_tags.values())
+
+    return render(request, 'home.html', {
+        'textos':textos,
+        'nomes':nomes,
+        'qtds':qtds,
+        'tags':tags,
+        'qtd_tags':qtd_tags})
 
 def escrever(request):
     if request.method == 'GET':
